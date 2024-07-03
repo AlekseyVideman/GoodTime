@@ -24,7 +24,7 @@ public class GeneralGuiceConfiguration extends AbstractModule {
 
     @Provides
     public ConfigurationDto configurationDto(FileConfiguration config) {
-        var T = new ConfigurationDto(
+        return new ConfigurationDto(
                 config.getString("messages.goodMorning"),
                 config.getString("messages.goodAfternoon"),
                 config.getString("messages.goodEvening"),
@@ -37,15 +37,11 @@ public class GeneralGuiceConfiguration extends AbstractModule {
                 config.getInt("options.title.stay"),
                 config.getInt("options.title.fadeOut")
         );
-        System.out.println(T);
-        return T;
     }
 
     @Provides
     public FileConfiguration fileConfiguration(GoodTime goodTime) {
-        var t =goodTime.getConfig();
-        System.out.println(t.getValues(true));
-        return t;
+        return goodTime.getConfig();
     }
 
     @Provides
