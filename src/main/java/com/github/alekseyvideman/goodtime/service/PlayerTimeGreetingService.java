@@ -15,51 +15,60 @@ import java.time.Duration;
 public class PlayerTimeGreetingService {
 
     private final PlayerRealTimeService playerRealTimeService;
+
     private final ConfigurationDto config;
+
     private final GoodTime goodTime;
 
     public void sendGreeting(Player player) {
-        var message = colorize(getTimeMessage(player));
-        long delay = config.messageDelay();
-        if (config.messageType() == 0) {
-            goodTime.getServer()
-                    .getScheduler()
-                    .scheduleSyncDelayedTask(goodTime, () -> player.sendMessage(message), delay);
-        } else if (config.messageType() == 1) {
-            goodTime.getServer()
-                    .getScheduler()
-                    .scheduleSyncDelayedTask(goodTime, () -> player.showTitle(Title.title(message,
-                                    Component.empty(),
-                                    Title.Times.times(
-                                            Duration.ofMillis(config.titleFadeIn()),
-                                            Duration.ofMillis(config.titleStay()),
-                                            Duration.ofMillis(config.titleFadeOut())
-                                    ))),
-                            delay);
-        } else if (config.messageType() == 2) {
-            goodTime.getServer()
-                    .getScheduler()
-                    .scheduleSyncDelayedTask(goodTime, () -> player.sendActionBar(message), delay);
-        }
+        goodTime.getServer()
+                .getScheduler().
+                runTaskAsynchronously(goodTime, getGreetingRunnable(player));
     }
-    
+
+    private Runnable getGreetingRunnable(Player player) {
+        return () -> {
+
+            var message = colorize(getTimeMessage(player));
+            long delay = config.messageDelay();
+
+            goodTime.getServer()
+                    .getScheduler()
+                    .scheduleSyncDelayedTask(goodTime, createMessageRunnable(player, message), delay);
+
+        };
+    }
+
+    @SuppressWarnings("all")
     private String getTimeMessage(Player player) {
-        var playerHour = playerRealTimeService.getRealPlayerHour(player.getAddress().getAddress());
-        var message = "";
+        Integer playerHour = playerRealTimeService.getRealPlayerHour(player);
 
-        if (playerHour >= 6 && playerHour <= 12) {
-            message = config.goodMorning();
-        } else if (playerHour >= 12 && playerHour <= 18) {
-            message = config.goodAfternoon();
-        } else if (playerHour >= 18 && playerHour <= 23) {
-            message = config.goodEvening();
-        } else {
-            message = config.goodNight();
-        }
+        return switch (playerHour) {
+            case Integer hour when hour >= 6 && hour <= 12 -> config.goodMorning();
+            case Integer hour when hour >= 12 && hour <= 18 -> config.goodAfternoon();
+            case Integer hour when hour >= 18 && hour <= 23 -> config.goodEvening();
 
-        return message;
+            default -> config.goodNight();
+        };
     }
-    
+
+    private Runnable createMessageRunnable(Player player, Component message) {
+        return switch (config.messageType()) {
+
+            case 0 -> () -> player.sendMessage(message);
+            case 1 -> () -> player.showTitle(Title.title(message,
+                    Component.empty(),
+                    Title.Times.times(
+                            Duration.ofMillis(config.titleFadeIn()),
+                            Duration.ofMillis(config.titleStay()),
+                            Duration.ofMillis(config.titleFadeOut())
+                    )));
+            case 2 -> () -> player.sendActionBar(message);
+            default -> throw new IllegalStateException("Unexpected message type: " + config.messageType());
+
+        };
+    }
+
     private Component colorize(String message) {
         return LegacyComponentSerializer.legacyAmpersand().deserialize(message);
     }

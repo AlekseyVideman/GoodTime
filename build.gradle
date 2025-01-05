@@ -53,13 +53,17 @@ tasks.named("processResources") {
 }
 
 tasks.build.dependsOn(shadowJar)
-jar.enabled = false
 
-tasks.register('movePluginToServer') {
+tasks.register('runServer') {
     dependsOn(build)
     doLast {
-        def pathToServer = "E:/DevCraft"
+        def pathToServer = new File("D:/DevCraft")
         def pluginFileName = project.name + "-" + pluginVersion + ".jar"
-        ant.move(file: buildDir.getAbsolutePath() + "/libs/" + pluginFileName, tofile: pathToServer + "/plugins/" + pluginFileName)
+        ant.move(file: buildDir.getAbsolutePath() + "/libs/" + pluginFileName, tofile: pathToServer.toString() + "/plugins/" + pluginFileName)
+
+        new ProcessBuilder()
+                .command("cmd.exe", "/c", "start", "RUN.bat")
+                .directory(pathToServer)
+                .start()
     }
 }

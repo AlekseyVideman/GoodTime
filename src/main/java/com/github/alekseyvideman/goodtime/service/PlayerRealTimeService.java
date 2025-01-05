@@ -6,9 +6,9 @@ import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.bukkit.entity.Player;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.time.OffsetTime;
 import java.time.ZoneId;
 
@@ -18,11 +18,13 @@ public class PlayerRealTimeService {
 
     private final DatabaseReader databaseReader;
 
-    public int getRealPlayerHour(InetAddress playerip) {
+    public int getRealPlayerHour(Player player) {
         int hour = 0;
 
         try {
-            var city = databaseReader.city(playerip);
+            var playerIp = player.getAddress().getAddress();
+
+            var city = databaseReader.city(playerIp);
             var location = city.getLocation();
             var locationTimeZone = location.getTimeZone();
             var offsetTime = OffsetTime.now(ZoneId.of(locationTimeZone));
